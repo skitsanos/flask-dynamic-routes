@@ -1,5 +1,10 @@
-from flask import Flask
 import os
+
+from flask import Flask, render_template
+from flask_sock import Sock
+
+app = Flask(__name__)
+websocket = Sock(app)
 
 
 def load_routes(app, path):
@@ -12,8 +17,6 @@ def load_routes(app, path):
             if dir.startswith("$"):
                 # Replace $ with < and > to make a path parameter
                 route_path = os.path.relpath(os.path.join(root, f"<{dir.replace('$', '')}>"), path)
-                print(route_path)
-                print(module_path)
 
             methods = []
             for method in ("get", "post", "put", "delete"):
@@ -30,9 +33,20 @@ def load_routes(app, path):
                     break
 
 
-app = Flask(__name__)
-
 load_routes(app, "routes")
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@websocket.route('/echo')
+def echo(sock):
+    while True:
+        data = sock.receive()
+        sock.send(f"pingback: {data}")
+
 
 if __name__ == "__main__":
     app.run()
