@@ -3,6 +3,8 @@ import os
 from flask import Flask, render_template
 from flask_sock import Sock
 
+from startup import startup
+
 app = Flask(__name__)
 websocket = Sock(app)
 
@@ -49,4 +51,5 @@ def echo(sock):
 
 
 if __name__ == "__main__":
-    app.run()
+    startup()
+    app.run(port=8000)
