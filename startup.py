@@ -1,8 +1,7 @@
-# startup.py
+from os import path, makedirs
 
-def startup():
+
+def startup(app):
     print("Running startup code...")
-
-
-if __name__ == "__main__":
-    startup()
+    if not path.exists(app.config['UPLOADS_FOLDER']):
+        makedirs(app.config['UPLOADS_FOLDER'], exist_ok=True)

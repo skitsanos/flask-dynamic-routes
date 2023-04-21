@@ -1,12 +1,20 @@
 import os
+import yaml
 
-from flask import Flask, render_template
+from flask import Flask, render_template, g
 from flask_sock import Sock
 
 from startup import startup
 
 app = Flask(__name__)
 websocket = Sock(app)
+
+if os.path.exists('config.yaml'):
+    with open('config.yaml', 'r') as config_file:
+        config = yaml.safe_load(config_file)
+        app.config.update(config)
+
+app.config['UPLOADS_FOLDER'] = f"{os.getcwd()}/data/uploads"
 
 
 def load_routes(app, path):
@@ -38,6 +46,11 @@ def load_routes(app, path):
 load_routes(app, "routes")
 
 
+@app.before_request
+def before_request():
+    g.app = app
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -51,5 +64,5 @@ def echo(sock):
 
 
 if __name__ == "__main__":
-    startup()
+    startup(app)
     app.run(port=8000)
