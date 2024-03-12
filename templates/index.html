@@ -1,32 +1,38 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Flask-Sock Demo</title>
+    <meta charset="UTF-8">
+    <title>PDF Screenshots Retriever API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Work Sans', sans-serif;
+        }
+        html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+        }
+        body{
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #root {
+            padding: 2ch;
+            font-weight: 300;
+            text-transform: uppercase;
+            background-color: yellow;
+        }
+
+    </style>
 </head>
 <body>
-<h1>Flask-Sock Demo</h1>
-<div id="log"></div>
-<br>
-<form id="form">
-    <label for="text">Input: </label>
-    <input type="text" id="text" autofocus>
-</form>
-<script>
-    const log = (text, color) => {
-        document.getElementById('log').innerHTML += `<span style="color: ${color}">${text}</span><br>`;
-    };
-
-    const socket = new WebSocket('ws://' + location.host + '/echo');
-    socket.addEventListener('message', ev => {
-        log('<<< ' + ev.data, 'blue');
-    });
-    document.getElementById('form').onsubmit = ev => {
-        ev.preventDefault();
-        const textField = document.getElementById('text');
-        log('>>> ' + textField.value, 'red');
-        socket.send(textField.value);
-        textField.value = '';
-    };
-</script>
+<div id="root">
+    Nothing interesting is in here
+</div>
 </body>
 </html>

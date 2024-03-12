@@ -1,4 +1,7 @@
+jsonschema
 flask
-flask_sock
-gunicorn
+flask-cors
 PyYAML
+waitress
+werkzeug==3.0.1
+psutil

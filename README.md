@@ -33,21 +33,3 @@ pip install -r requirements.txt
 ```
 
 ## Running the app
-
-### With gunicorn
-
-Gunicorn (short for "Green Unicorn") is a Python Web Server Gateway Interface (WSGI) HTTP server. It's designed to be a
-fast and reliable server that can handle multiple requests simultaneously. Gunicorn is commonly used to serve web
-applications built with Python frameworks such as Django or Flask.
-
-Gunicorn can be run from the command line or as a service, and it can be configured using a configuration file or
-command line arguments. Some of the configuration options include the number of worker processes, the address and port
-to listen on, logging settings, and more.
-
-One of the advantages of using Gunicorn is that it integrates well with other tools commonly used in Python web
-development, such as Nginx and load balancers. It's also designed to be simple and easy to use, making it a popular
-choice for deploying Python web applications
-
-```shell
-gunicorn main:app --reload
-```

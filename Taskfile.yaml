@@ -1,0 +1,130 @@
+version: '3'
+
+env:
+  AUTH_TOKEN: YOUR_AUTH_TOKEN
+
+vars:
+  DOCKER_TAG: skitsanos/flask-api-server
+  DEPLOYMENT_ENDPOINT: YOUR_SERVER_IP
+  DEPLOYMENT_USERNAME: YOUR_SERVER_USERNAME
+  DEPLOYMENT_SERVICE_NAME: openai-files-api
+  DEPLOYMENT_SERVICE_GROUP: rag
+  DEPLOYMENT_SERVICE_USERNAME: rag
+  DEPLOYMENT_SERVICE_PORT: 5001
+  DEPLOYMENT_SERVICE_AUTH_TOKEN: demo
+  DEPLOYMENT_PATH: /opt/{{.DEPLOYMENT_SERVICE_USERNAME}}/{{.DEPLOYMENT_SERVICE_NAME}}
+
+tasks:
+  install:
+    cmds:
+      - cmd: pip install --upgrade pip
+      - cmd: pip install --upgrade virtualenv
+      - cmd: test -d .venv || virtualenv ./.venv
+      - cmd: ./.venv/bin/python -m pip install --upgrade pip
+      - cmd: ./.venv/bin/pip install --upgrade -r requirements.txt
+        platforms: [ darwin, linux ]
+      - cmd: .\.venv\Scripts\pip install --upgrade -r requirements.txt
+        platforms: [ windows ]
+
+  clean:
+    internal: true
+    cmds:
+      - |
+        find . -name "__pycache__" -type d -delete
+
+  generate-certificate:
+    cmds:
+      - cmd: |
+          mkdir -p ssl
+          echo "[req]
+          default_bits = 2048
+          prompt = no
+          default_md = sha256
+          distinguished_name = dn
+          
+          [dn]
+          C=US
+          ST=California
+          L=San Francisco
+          O=Example Company
+          OU=IT Department
+          CN=example.com" > ssl/openssl.cnf
+          
+          openssl req -config ssl/openssl.cnf -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes
+        platforms: [ darwin, linux ]
+
+  lint:
+    cmd: pylint ./**/*.py
+
+  start:
+    cmds:
+      - cmd: .venv/bin/python server.py
+        platforms: [ darwin, linux ]
+      - cmd: .venv\Scripts\python server.py
+        platforms: [ windows ]
+
+  docker-build:
+    cmds:
+      - task: clean
+      - |
+        docker build --progress plain -t {{.DOCKER_TAG}} .
+
+  generate-unit-file:
+    cmds:
+      - echo "[+] Generating SystemD Service file"
+      - cmd: |
+          echo "[Unit]
+          Description={{.DEPLOYMENT_SERVICE_NAME}} Service
+          After=network.target
+
+          [Service]
+          User={{.DEPLOYMENT_SERVICE_USERNAME}}
+          Group={{.DEPLOYMENT_SERVICE_GROUP}}
+          WorkingDirectory={{.DEPLOYMENT_PATH}}
+          ExecStart={{.DEPLOYMENT_PATH}}/.venv/bin/python server.py
+          Restart=always
+          RestartSec=5
+          Environment=\"PORT={{.DEPLOYMENT_SERVICE_PORT}}\"
+          Environment=\"AUTH_TOKEN={{.DEPLOYMENT_SERVICE_AUTH_TOKEN}}\"
+
+          [Install]
+          WantedBy=multi-user.target" > {{.DEPLOYMENT_SERVICE_NAME}}.service
+      - echo '[+] DONE'
+
+  deploy-to-remote:
+    cmds:
+      - task: generate-unit-file
+      - cmd: |
+          echo "[+] Checking if group {{.DEPLOYMENT_SERVICE_GROUP}} exists"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "getent group {{.DEPLOYMENT_SERVICE_GROUP}} &> /dev/null || groupadd -r {{.DEPLOYMENT_SERVICE_GROUP}}"
+
+          echo "[+] Checking if user {{.DEPLOYMENT_SERVICE_USERNAME}} exists"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "id {{.DEPLOYMENT_SERVICE_USERNAME}} &> /dev/null || useradd -g {{.DEPLOYMENT_SERVICE_GROUP}} -d /opt/{{.DEPLOYMENT_SERVICE_USERNAME}} -s /bin/bash {{.DEPLOYMENT_SERVICE_USERNAME}}"
+      - cmd: |
+          find . -name "*.pyc" -type f -delete
+
+          echo "[+] Checking {{.DEPLOYMENT_PATH}}"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "mkdir -p {{.DEPLOYMENT_PATH}}/"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "rm -rf {{.DEPLOYMENT_PATH}}/*"
+
+          echo "[+] Copying files to {{.DEPLOYMENT_PATH}}"
+          scp Taskfile.yaml {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          scp requirements.txt {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          scp config.yaml {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          scp -r utils {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          scp -r routes {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          scp -r templates {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          scp -r server.py {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+
+          echo "[+] Installing Python packages"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "cd {{.DEPLOYMENT_PATH}} && task install"
+
+          echo "[+] Installing SystemD Service"
+          scp -r {{.DEPLOYMENT_SERVICE_NAME}}.service {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}}:{{.DEPLOYMENT_PATH}}
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "chmod 664 {{.DEPLOYMENT_PATH}}/{{.DEPLOYMENT_SERVICE_NAME}}.service"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "sudo cp {{.DEPLOYMENT_PATH}}/{{.DEPLOYMENT_SERVICE_NAME}}.service /etc/systemd/system/"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "if systemctl list-unit-files | grep -q '{{.DEPLOYMENT_SERVICE_NAME}}.service'; then systemctl is-active --quiet {{.DEPLOYMENT_SERVICE_NAME}}.service && sudo systemctl stop {{.DEPLOYMENT_SERVICE_NAME}}.service || echo 'Service exists but is not running'; else echo 'Service does not exist'; fi"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "sudo systemctl daemon-reload"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "sudo systemctl enable {{.DEPLOYMENT_SERVICE_NAME}}.service"
+          ssh {{.DEPLOYMENT_USERNAME}}@{{.DEPLOYMENT_ENDPOINT}} "sudo systemctl start {{.DEPLOYMENT_SERVICE_NAME}}.service"
+          echo "[+] DONE"
