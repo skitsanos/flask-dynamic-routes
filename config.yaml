@@ -4,6 +4,9 @@ server:
   uploads: .uploads
   public:
     - ^/$
+    - ^/static
+    - ^/login
+    - ^/logout
     - ^/api/_system/stats
 
 cors:

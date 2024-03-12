@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import yaml
-from flask import Flask, g, render_template, request, jsonify
+from flask import Flask, g, render_template, request, redirect, session
 from flask_cors import CORS
 from waitress import serve
 
@@ -25,11 +25,20 @@ def before_request():
     app.logger.info(f"{request.method} {request.path}")
 
     public_routes = app.config.get('server', {}).get('public', [])
-
-    # use regex to match the public routes
     public_route_patterns = [re.compile(route) for route in public_routes]
-    if not any(pattern.match(request.path) for pattern in public_route_patterns):
-        return router.validate_token(os.getenv('AUTH_TOKEN'))
+
+    is_public_route = any(pattern.match(request.path) for pattern in public_route_patterns)
+
+    # if request.path starts with '/api' then check for the token
+    if request.path.startswith('/api'):
+        # use regex to match the public routes
+        if not is_public_route:
+            return router.validate_token(os.getenv('AUTH_TOKEN'))
+
+    # if request.path not starts with '/api' then check for the session
+    if not request.path.startswith('/api'):
+        if 'user' not in session and not is_public_route:
+            return redirect('/login')
 
 
 @app.errorhandler(404)
@@ -84,7 +93,13 @@ if __name__ == '__main__':
             cors_config = app.config.get('cors', {})
             CORS(app, resources={r"/*": cors_config})
 
+    app.logger.info('Setting the secret key...')
+    app.secret_key = os.getenv('SECRET_KEY') or app.config.get('server', {}).get(
+        'secret_key') or 'default_secret_key'
+
     app.logger.info(f'Loading routes ({os.getcwd()}/routes)...')
+
+    app.static_folder = 'public'
 
     router.load_routes(app, "routes")
 

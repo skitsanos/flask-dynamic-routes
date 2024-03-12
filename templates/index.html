@@ -6,39 +6,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&display=swap" rel="stylesheet">
-    <style>
-        * {
-            font-family: 'Work Sans', sans-serif;
-        }
-        html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-        }
-        body{
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #root {
-            padding: 2ch;
-            font-weight: 300;
-            text-transform: uppercase;
-            text-align: center;
-            background-color: yellow;
-        }
-
-        #root a {
-            color: black;
-            text-decoration: none;
-        }
-
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='global.css') }}">
+    <link rel="stylesheet" href="global.css">
 </head>
 <body>
 <div id="root">
-    Nothing interesting is in here
+    <h1>{{page_title}}</h1>
     <div style="text-transform: initial;">
         <a href="https://github.com/skitsanos/flask-dynamic-routes" target="_blank">{{page_description}}</a>
     </div>
