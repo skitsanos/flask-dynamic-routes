@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PDF Screenshots Retriever API</title>
+    <title>{{page_title}}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&display=swap" rel="stylesheet">
@@ -25,7 +25,13 @@
             padding: 2ch;
             font-weight: 300;
             text-transform: uppercase;
+            text-align: center;
             background-color: yellow;
+        }
+
+        #root a {
+            color: black;
+            text-decoration: none;
         }
 
     </style>
@@ -33,6 +39,9 @@
 <body>
 <div id="root">
     Nothing interesting is in here
+    <div style="text-transform: initial;">
+        <a href="https://github.com/skitsanos/flask-dynamic-routes" target="_blank">{{page_description}}</a>
+    </div>
 </div>
 </body>
 </html>

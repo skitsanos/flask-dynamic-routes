@@ -38,6 +38,14 @@ def page_not_found(error):
     return {'error': {'message': 'Page not found', 'code': 404, 'details': error.description}}, 404
 
 
+@app.context_processor
+def inject_global_variables():
+    return dict(
+        page_title='API Server',
+        page_description='(Powered by skitsanos/flask-dynamic-routes)',
+    )
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
