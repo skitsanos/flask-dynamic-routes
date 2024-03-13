@@ -104,7 +104,7 @@ Before running the "Deploy to Remote Server" task, ensure that you have correctl
 
 ```yaml
 env:
-	# Replace with your server's address or hostname
+  # Replace with your server's address or hostname
   DEPLOYMENT_ENDPOINT: "192.168.1.100"
   # Replace with your deployment username on the remote server
   DEPLOYMENT_USERNAME: "deployuser"
