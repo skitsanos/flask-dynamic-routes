@@ -1,7 +1,14 @@
+"""
+This module is responsible for handling the POST requests to the API Users endpoint.
+"""
 from flask import request
 
 
 def handler():
+    """
+    Handles the POST request to the API Users endpoint
+    :return:
+    """
     data = request.get_json()
     name = data.get('name')
     email = data.get('email')
@@ -10,5 +17,7 @@ def handler():
     # ...
 
     return {
-        "demo": "yes"
+        "demo": "yes",
+        "name": name,
+        "email": email
     }

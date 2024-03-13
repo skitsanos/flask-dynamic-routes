@@ -1,9 +1,16 @@
+"""
+This module is responsible for handling the POST requests to the API Upload endpoint.
+"""
 import os
 
 from flask import request, make_response, g
 
 
 def handler():
+    """
+    Uploads a file to the server
+    :return:
+    """
     if 'file' not in request.files:
         return make_response(
             {
@@ -22,12 +29,12 @@ def handler():
             return {
                 "result": f"{len(request.files)} files saved"
             }
-        else:
-            return make_response(
-                {
-                    "error":
-                        {
-                            "message": 'File storage is not writable'}
-                },
-                400
-            )
+
+        return make_response(
+            {
+                "error":
+                    {
+                        "message": 'File storage is not writable'}
+            },
+            400
+        )

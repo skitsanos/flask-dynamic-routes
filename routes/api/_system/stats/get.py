@@ -1,5 +1,8 @@
-import psutil
+"""
+Returns the CPU and memory usage of the current process.
+"""
 import os
+import psutil
 
 
 def handler():

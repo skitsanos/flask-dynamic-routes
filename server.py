@@ -1,3 +1,8 @@
+"""
+Flask server Template
+@version: 1.0.0
+@author: skitsanos
+"""
 import logging
 import os
 import re
@@ -18,11 +23,16 @@ app = Flask(__name__)
 
 @app.before_request
 def before_request():
+    """
+    Before request handler. This is where we can check for the token or session and redirect to
+    login page if not authenticated or authorized to access the page or API endpoint.
+    :return:
+    """
     #
     # The request handler requires having access to the app context
     #
     g.app = app
-    app.logger.info(f"{request.method} {request.path}")
+    app.logger.info("%s %s", request.method, request.path)
 
     public_routes = app.config.get('server', {}).get('public', [])
     public_route_patterns = [re.compile(route) for route in public_routes]
@@ -40,23 +50,44 @@ def before_request():
         if 'user' not in session and not is_public_route:
             return redirect('/login')
 
+    return None
+
 
 @app.errorhandler(404)
 def page_not_found(error):
-    app.logger.error(f'Page not found: {request.path}')
+    """
+    Page not found error handler. This is where we can log the error and return a JSON response
+    to the client.
+    :param error:
+    :return:
+    """
+    app.logger.error('Page not found: %s}', request.path)
     return {'error': {'message': 'Page not found', 'code': 404, 'details': error.description}}, 404
 
 
 @app.context_processor
 def inject_global_variables():
-    return dict(
-        page_title='API Server',
-        page_description='(Powered by skitsanos/flask-dynamic-routes)',
-    )
+    """
+    Inject global variables into the template context
+    :return:
+    """
+
+    def format_price(amount, currency="€"):
+        return f"{currency}{amount:.2f}"
+
+    return {
+        'page_title': 'API Server',
+        'page_description': '(Powered by skitsanos/flask-dynamic-routes)',
+        'format_price': format_price
+    }
 
 
 @app.route('/')
 def index():
+    """
+    Index page handler
+    :return:
+    """
     return render_template('index.html')
 
 
@@ -86,7 +117,7 @@ if __name__ == '__main__':
     app.logger.info('Checking config...')
 
     if os.path.exists('config.yaml'):
-        with open('config.yaml', 'r') as config_file:
+        with open('config.yaml', mode='r', encoding='utf8') as config_file:
             config = yaml.safe_load(config_file)
             app.config.update(config)
 
@@ -97,7 +128,7 @@ if __name__ == '__main__':
     app.secret_key = os.getenv('SECRET_KEY') or app.config.get('server', {}).get(
         'secret_key') or 'default_secret_key'
 
-    app.logger.info(f'Loading routes ({os.getcwd()}/routes)...')
+    app.logger.info('Loading routes (%s/routes)...', os.getcwd())
 
     app.static_folder = 'public'
 

@@ -54,7 +54,7 @@ tasks:
         platforms: [ darwin, linux ]
 
   lint:
-    cmd: pylint ./**/*.py
+    cmd: pylint $(git ls-files '*.py')
 
   start:
     cmds:
