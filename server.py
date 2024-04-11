@@ -1,5 +1,5 @@
 """
-Flask server Template
+Flask Server Template
 @version: 1.0.0
 @author: skitsanos
 """

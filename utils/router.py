@@ -54,7 +54,7 @@ def load_routes(app, path):
     """
     for root, dirs, _files in os.walk(path, followlinks=False):
         for found_dir in dirs:
-            entry_point = os.path.join(root, found_dir)
+            entry_point = str(os.path.join(root, found_dir))
             route_path = (os.path.relpath(path=entry_point, start=path)
                           .replace("\\", "/"))
             module_path = os.path.relpath(entry_point, path)
