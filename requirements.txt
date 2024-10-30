@@ -3,5 +3,5 @@ flask
 flask-cors
 PyYAML
 waitress
-werkzeug==3.0.4
+werkzeug==3.0.6
 psutil
